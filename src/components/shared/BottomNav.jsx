@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom'
 
 const tabs = [
-  { to: '/',         label: 'Today',    icon: '☀️' },
-  { to: '/calendar', label: 'Calendar', icon: '📅' },
-  { to: '/insights', label: 'Insights', icon: '📊' },
-  { to: '/categories',label: 'Tasks',   icon: '🗂️' },
-  { to: '/shared',   label: 'CC Team',  icon: '👥' },
-  { to: '/settings', label: 'Settings', icon: '⚙️' },
+  { to: '/',           label: 'Today',    icon: '☀️' },
+  { to: '/calendar',   label: 'Calendar', icon: '📅' },
+  { to: '/insights',   label: 'Insights', icon: '📊' },
+  { to: '/categories', label: 'Tasks',    icon: '🗂️' },
+  { to: '/diary',      label: 'Diary',    icon: '📓' },
+  { to: '/shared',     label: 'CC Team',  icon: '👥' },
+  { to: '/settings',   label: 'Settings', icon: '⚙️' },
 ]
 
 const BottomNav = () => {
