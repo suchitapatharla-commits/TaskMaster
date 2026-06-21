@@ -26,10 +26,10 @@ export const DiaryProvider = ({ children }) => {
   }, [user])
 
   const addEntry = (entry) => addDoc(collection(db, 'diary'), {
-    ...entry,
-    uid: user.uid,
-    createdAt: new Date().toISOString(),
-  })
+  ...entry,
+  uid: user.uid,
+  createdAt: new Date().toISOString(),
+})
 
   const editEntry = (id, data) => updateDoc(doc(db, 'diary', id), data)
   const deleteEntry = (id) => deleteDoc(doc(db, 'diary', id))
