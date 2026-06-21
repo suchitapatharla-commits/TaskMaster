@@ -13,6 +13,7 @@ import Insights from './pages/Insights'
 import Settings from './pages/Settings'
 import useNotifications from './hooks/useNotifications'
 import SharedBoard from './pages/SharedBoard'
+import { CCProvider } from './context/CCContext'
 
 const AppRoutes = () => {
   const { user } = useAuth()
@@ -21,6 +22,7 @@ const AppRoutes = () => {
 
   return (
     <TaskProvider>
+       <CCProvider>
       <DiaryProvider>
         <div className="min-h-screen bg-background text-foreground">
           <main className="pb-24 max-w-2xl mx-auto">
@@ -39,6 +41,7 @@ const AppRoutes = () => {
         </div>
         <NotificationWatcher />
   <div className="min-h-screen bg-background text-foreground"> </div>
+   </CCProvider>
       </DiaryProvider>
 
     </TaskProvider>
