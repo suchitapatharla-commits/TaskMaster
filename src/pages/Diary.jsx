@@ -1,9 +1,94 @@
 import { useState } from 'react'
+import { isThisWeek, parseISO, format } from 'date-fns'
 import Header from '../components/shared/Header'
 import { useDiary } from '../context/DiaryContext'
 import { useTasks } from '../context/TaskContext'
 import { CATEGORIES } from '../lib/categories'
-import { isThisWeek, parseISO, format } from 'date-fns'
+
+const WeeklyRecap = ({ entries }) => {
+  const thisWeekEntries = entries.filter(e =>
+    e.createdAt && isThisWeek(parseISO(e.createdAt), { weekStartsOn: 1 })
+  )
+
+  const byCategory = {}
+  thisWeekEntries.forEach(e => {
+    const key = e.category || 'uncategorized'
+    if (!byCategory[key]) byCategory[key] = []
+    byCategory[key].push(e)
+  })
+
+  const allTags = thisWeekEntries.flatMap(e => e.tags || [])
+  const tagCounts = allTags.reduce((acc, tag) => {
+    acc[tag] = (acc[tag] || 0) + 1
+    return acc
+  }, {})
+  const topTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-4 border border-border rounded-xl bg-card text-center">
+          <p className="text-3xl font-medium">{thisWeekEntries.length}</p>
+          <p className="text-xs text-muted-foreground mt-1">Entries this week</p>
+        </div>
+        <div className="p-4 border border-border rounded-xl bg-card text-center">
+          <p className="text-3xl font-medium">{Object.keys(byCategory).length}</p>
+          <p className="text-xs text-muted-foreground mt-1">Domains covered</p>
+        </div>
+      </div>
+
+      {topTags.length > 0 && (
+        <div className="p-4 border border-border rounded-xl bg-card space-y-2">
+          <p className="text-sm font-medium">Top tags this week</p>
+          <div className="flex flex-wrap gap-2">
+            {topTags.map(([tag, count]) => (
+              <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-accent border border-border">
+                #{tag} <span className="text-muted-foreground">×{count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {Object.keys(byCategory).length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-4xl mb-3">📊</p>
+          <p className="text-sm">No entries this week yet!</p>
+          <p className="text-xs mt-1">Switch to Entries and add some thoughts</p>
+        </div>
+      ) : (
+        Object.entries(byCategory).map(([key, catEntries]) => {
+          const cat = key !== 'uncategorized' ? CATEGORIES[key] : null
+          return (
+            <div key={key} className="border border-border rounded-xl bg-card overflow-hidden">
+              <div className={`px-4 py-2.5 border-b border-border flex items-center gap-2 ${cat ? cat.color : 'bg-accent'}`}>
+                <span className="text-xs font-medium">{cat ? cat.label : 'Uncategorized'}</span>
+                <span className="text-xs opacity-70">{catEntries.length} {catEntries.length === 1 ? 'entry' : 'entries'}</span>
+              </div>
+              <div className="divide-y divide-border">
+                {catEntries.map(entry => (
+                  <div key={entry.id} className="px-4 py-3 space-y-1">
+                    <p className="text-sm leading-relaxed">{entry.content}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {entry.tags?.map(t => (
+                        <span key={t} className="text-xs text-muted-foreground">#{t}</span>
+                      ))}
+                      <span className="text-xs text-muted-foreground">
+                        {format(parseISO(entry.createdAt), 'EEE, MMM d')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
 
 const Diary = () => {
   const { entries, addEntry, deleteEntry } = useDiary()
@@ -17,15 +102,11 @@ const Diary = () => {
   const [taskTitle, setTaskTitle] = useState('')
   const [taskCategory, setTaskCategory] = useState('job')
   const [taskPriority, setTaskPriority] = useState('medium')
-  const [view, setView] = useState('entries') // 'entries' | 'recap'
+  const [view, setView] = useState('entries')
 
   const handleAdd = () => {
     if (!content.trim()) return
-    addEntry({
-      content,
-      tags: tag ? [tag] : [],
-      category: category || null,
-    })
+    addEntry({ content, tags: tag ? [tag] : [], category: category || null })
     setContent('')
     setTag('')
     setCategory('')
@@ -45,6 +126,7 @@ const Diary = () => {
       category: taskCategory,
       priority: taskPriority,
       notes: entry.content,
+      dueDate: new Date().toISOString().split('T')[0],
     })
     setConverting(null)
     setTaskTitle('')
@@ -77,104 +159,12 @@ const Diary = () => {
           ))}
         </div>
 
-        {/* WEEKLY RECAP VIEW */}
-        {view === 'recap' && (() => {
-          const thisWeekEntries = entries.filter(e =>
-            e.createdAt && isThisWeek(parseISO(e.createdAt), { weekStartsOn: 1 })
-          )
+        {/* Weekly recap */}
+        {view === 'recap' && <WeeklyRecap entries={entries} />}
 
-          const byCategory = {}
-          thisWeekEntries.forEach(e => {
-            const key = e.category || 'uncategorized'
-            if (!byCategory[key]) byCategory[key] = []
-            byCategory[key].push(e)
-          })
-
-          const allTags = thisWeekEntries.flatMap(e => e.tags || [])
-          const tagCounts = allTags.reduce((acc, tag) => {
-            acc[tag] = (acc[tag] || 0) + 1
-            return acc
-          }, {})
-          const topTags = Object.entries(tagCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-
-          return (
-            <div className="space-y-4">
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 border border-border rounded-xl bg-card text-center">
-                  <p className="text-3xl font-medium">{thisWeekEntries.length}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Entries this week</p>
-                </div>
-                <div className="p-4 border border-border rounded-xl bg-card text-center">
-                  <p className="text-3xl font-medium">{Object.keys(byCategory).length}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Domains covered</p>
-                </div>
-              </div>
-
-              {/* Top tags */}
-              {topTags.length > 0 && (
-                <div className="p-4 border border-border rounded-xl bg-card space-y-2">
-                  <p className="text-sm font-medium">Top tags this week</p>
-                  <div className="flex flex-wrap gap-2">
-                    {topTags.map(([tag, count]) => (
-                      <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-accent border border-border">
-                        #{tag} <span className="text-muted-foreground">×{count}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Entries by category */}
-              {Object.keys(byCategory).length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p className="text-4xl mb-3">📊</p>
-                  <p className="text-sm">No entries this week yet!</p>
-                  <p className="text-xs mt-1">Switch to Entries and add some thoughts</p>
-                </div>
-              ) : (
-                Object.entries(byCategory).map(([key, catEntries]) => {
-                  const cat = key !== 'uncategorized' ? CATEGORIES[key] : null
-                  return (
-                    <div key={key} className="border border-border rounded-xl bg-card overflow-hidden">
-                      <div className={`px-4 py-2.5 border-b border-border flex items-center gap-2
-                        ${cat ? cat.color : 'bg-accent'}`}>
-                        <span className="text-xs font-medium">
-                          {cat ? cat.label : 'Uncategorized'}
-                        </span>
-                        <span className="text-xs opacity-70">
-                          {catEntries.length} {catEntries.length === 1 ? 'entry' : 'entries'}
-                        </span>
-                      </div>
-                      <div className="divide-y divide-border">
-                        {catEntries.map(entry => (
-                          <div key={entry.id} className="px-4 py-3 space-y-1">
-                            <p className="text-sm leading-relaxed">{entry.content}</p>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {entry.tags?.map(t => (
-                                <span key={t} className="text-xs text-muted-foreground">#{t}</span>
-                              ))}
-                              <span className="text-xs text-muted-foreground">
-                                {format(parseISO(entry.createdAt), 'EEE, MMM d')}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          )
-        })()}
-
-        {/* ENTRIES VIEW */}
+        {/* Entries view */}
         {view === 'entries' && (
           <>
-            {/* Search */}
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -182,7 +172,6 @@ const Diary = () => {
               className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary"
             />
 
-            {/* Add entry */}
             {!open ? (
               <button
                 onClick={() => setOpen(true)}
@@ -219,23 +208,16 @@ const Diary = () => {
                   </select>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleAdd}
-                    className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-                  >
+                  <button onClick={handleAdd} className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
                     Save entry
                   </button>
-                  <button
-                    onClick={() => setOpen(false)}
-                    className="flex-1 py-2 border border-border rounded-lg text-sm text-muted-foreground"
-                  >
+                  <button onClick={() => setOpen(false)} className="flex-1 py-2 border border-border rounded-lg text-sm text-muted-foreground">
                     Cancel
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Empty state */}
             {filtered.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <p className="text-4xl mb-3">📓</p>
@@ -243,11 +225,9 @@ const Diary = () => {
               </div>
             )}
 
-            {/* Entries */}
             {filtered.map(entry => {
               const cat = entry.category ? CATEGORIES[entry.category] : null
               const isConverting = converting === entry.id
-
               return (
                 <div key={entry.id} className="border border-border rounded-xl bg-card overflow-hidden">
                   <div className="p-4 space-y-2">
@@ -260,7 +240,7 @@ const Diary = () => {
                           </span>
                         )}
                         {entry.tags?.map(t => (
-                          <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-accent text-accent-foreground border border-border">
+                          <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-accent border border-border">
                             #{t}
                           </span>
                         ))}
@@ -290,9 +270,7 @@ const Diary = () => {
 
                   {isConverting && (
                     <div className="border-t border-border p-4 bg-accent/30 space-y-3">
-                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                        Convert to task
-                      </p>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Convert to task</p>
                       <input
                         autoFocus
                         value={taskTitle}
@@ -344,3 +322,6 @@ const Diary = () => {
       </div>
     </div>
   )
+}
+
+export default Diary
