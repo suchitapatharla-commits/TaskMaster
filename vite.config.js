@@ -10,7 +10,13 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      devOptions: { enabled: true },
+      includeAssets: [
+        'favicon.png',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png'
+      ],
       manifest: {
         name: 'TaskMaster',
         short_name: 'TaskMaster',
@@ -38,6 +44,11 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any maskable',
           },
+          {
+            src: 'apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png',
+          },
         ],
       },
       workbox: {
@@ -46,9 +57,12 @@ export default defineConfig({
           {
             urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
             handler: 'NetworkFirst',
-            options: {
-              cacheName: 'firestore-cache',
-            },
+            options: { cacheName: 'firestore-cache' },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: { cacheName: 'google-fonts' },
           },
         ],
       },
