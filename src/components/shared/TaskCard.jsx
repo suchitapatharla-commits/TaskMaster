@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTasks } from '../../context/TaskContext'
-import { CATEGORIES } from '../../lib/categories'
+import { useCategories } from '../../context/CategoryContext'
 
 const TaskCard = ({ task }) => {
   const { editTask, deleteTask, toggleStatus } = useTasks()
@@ -48,7 +48,8 @@ const TaskCard = ({ task }) => {
     editTask(task.id, { subtasks: updated })
   }
 
-  const category = CATEGORIES[task.category] || CATEGORIES.job
+  const { categories } = useCategories()
+  const category = categories.find(c => c.id === task.category) || categories[0]
   const subtasks = task.subtasks || []
   const doneCount = subtasks.filter(s => s.done).length
 

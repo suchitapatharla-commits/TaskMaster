@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTasks } from '../../context/TaskContext'
-import { CATEGORIES } from '../../lib/categories'
+import { useCategories } from '../../context/CategoryContext'
 
 const AddTask = ({ defaultCategory = 'job' }) => {
   const { addTask } = useTasks()
@@ -11,6 +11,7 @@ const AddTask = ({ defaultCategory = 'job' }) => {
   const [dueDate, setDueDate] = useState('')
   const [shared, setShared] = useState(false)
   const [notes, setNotes] = useState('')
+  const { categories } = useCategories()
 
   const handleAdd = () => {
     if (!title.trim()) return
@@ -55,8 +56,8 @@ const AddTask = ({ defaultCategory = 'job' }) => {
           }}
           className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none"
         >
-          {Object.entries(CATEGORIES).map(([key, cat]) => (
-            <option key={key} value={key}>{cat.label}</option>
+          {categories.map(cat => (
+           <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
         </select>
         <select
