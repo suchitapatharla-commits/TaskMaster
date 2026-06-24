@@ -5,6 +5,7 @@ import TaskCard from '../components/shared/TaskCard'
 import { useTasks } from '../context/TaskContext'
 import { CATEGORIES } from '../lib/categories'
 import { format } from 'date-fns'
+import { useNavigate } from 'react-router-dom'
 
 const Today = () => {
   const { tasks } = useTasks()
@@ -39,6 +40,7 @@ const Today = () => {
 
   const dayName = format(now, 'EEEE')
   const dateStr = format(now, 'MMM d, yyyy')
+  const navigate = useNavigate()
 
   return (
     <div>
@@ -96,21 +98,24 @@ const Today = () => {
             </div>
 
             {/* Overdue card */}
-            <div className={`p-4 border rounded-2xl space-y-1
-              ${overdue.length > 0
-                ? 'border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800'
-                : 'border-border bg-card'
-              }`}>
-              <p className="text-xs text-muted-foreground">Overdue</p>
-              <p className={`text-3xl font-medium ${overdue.length > 0 ? 'text-red-500' : ''}`}>
-                {overdue.length}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {overdue.length === 0 ? 'All caught up!' : 'need attention'}
-              </p>
+             <div
+               onClick={() => overdue.length > 0 && navigate('/overdue')}
+               className={`p-4 border rounded-2xl space-y-1 transition-all
+               ${overdue.length > 0
+               ? 'border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 cursor-pointer hover:opacity-80'
+               : 'border-border bg-card'
+               }`}
+              >
+             <p className="text-xs text-muted-foreground">Overdue</p>
+             <p className={`text-3xl font-medium ${overdue.length > 0 ? 'text-red-500' : ''}`}>
+             {overdue.length}
+             </p>
+             <p className="text-xs text-muted-foreground">
+             {overdue.length === 0 ? 'All caught up!' : 'tap to view'}
+             </p>
             </div>
-
-            {/* Focus mode pills */}
+          
+          {/* Focus mode pills */}
             <div className="col-span-2 p-4 border border-border rounded-2xl bg-card space-y-2">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
                 Focus mode

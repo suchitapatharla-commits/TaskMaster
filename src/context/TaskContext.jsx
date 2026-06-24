@@ -32,8 +32,33 @@ export const TaskProvider = ({ children }) => {
   const editTask = (id, data) => updateDoc(doc(db, 'tasks', id), data)
   const deleteTask = (id) => deleteDoc(doc(db, 'tasks', id))
   const toggleStatus = (task) => updateDoc(doc(db, 'tasks', task.id), {
-    status: task.status === 'done' ? 'pending' : 'done'
+  status: task.status === 'done' ? 'pending' : 'done',
+  completedAt: task.status !== 'done' ? new Date().toISOString() : null,
+})
+
+  // Auto delete done tasks older than 7 days
+useEffect(() => {
+  if (!user) return
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - 7)
+
+  tasks.forEach(task => {
+    if (
+      task.status === 'done' &&
+      task.completedAt &&
+      new Date(task.completedAt) < cutoff
+    ) {
+      // Archive to insights before deleting
+      addDoc(collection(db, 'task_archive'), {
+        ...task,
+        uid: user.uid,
+        archivedAt: new Date().toISOString(),
+      }).then(() => {
+        deleteDoc(doc(db, 'tasks', task.id))
+      })
+    }
   })
+}, [tasks])
 
   return (
     <TaskContext.Provider value={{ tasks, addTask, editTask, deleteTask, toggleStatus }}>

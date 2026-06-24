@@ -12,18 +12,28 @@ const AddTask = ({ defaultCategory = 'job' }) => {
   const [shared, setShared] = useState(false)
   const [notes, setNotes] = useState('')
   const { categories } = useCategories()
+  const [dueTime, setDueTime] = useState('')
 
   const handleAdd = () => {
-    if (!title.trim()) return
-    addTask({ title, category, priority, dueDate: dueDate || null, shared, notes })
-    setTitle('')
-    setCategory(defaultCategory)
-    setPriority('medium')
-    setDueDate('')
-    setShared(false)
-    setNotes('')
-    setOpen(false)
-  }
+  if (!title.trim()) return
+  addTask({
+    title,
+    category,
+    priority,
+    dueDate: dueDate || null,
+    dueTime: dueTime || null,
+    shared,
+    notes,
+  })
+  setTitle('')
+  setCategory(defaultCategory)
+  setPriority('medium')
+  setDueDate('')
+  setDueTime('')
+  setShared(false)
+  setNotes('')
+  setOpen(false)
+}
 
   if (!open) {
     return (
@@ -70,12 +80,20 @@ const AddTask = ({ defaultCategory = 'job' }) => {
           <option value="high">High</option>
         </select>
       </div>
-      <input
-        type="date"
-        value={dueDate}
-        onChange={e => setDueDate(e.target.value)}
-        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none"
-      />
+      <div className="flex gap-2">
+  <input
+    type="date"
+    value={dueDate}
+    onChange={e => setDueDate(e.target.value)}
+    className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none"
+  />
+  <input
+    type="time"
+    value={dueTime}
+    onChange={e => setDueTime(e.target.value)}
+    className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none"
+  />
+</div>
       <textarea
         value={notes}
         onChange={e => setNotes(e.target.value)}

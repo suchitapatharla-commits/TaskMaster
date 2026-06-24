@@ -16,6 +16,7 @@ import Settings from './pages/Settings'
 import Login from './pages/Login'
 import ManageCategories from './pages/ManageCategories'
 import useNotifications from './hooks/useNotifications'
+import Overdue from './pages/Overdue'
 
 const NotificationWatcher = () => {
   useNotifications()
@@ -45,6 +46,7 @@ const AppRoutes = () => {
                   <Route path="/shared"              element={<SharedBoard />} />
                   <Route path="/settings"            element={<Settings />} />
                   <Route path="*"                    element={<Navigate to="/" />} />
+                  <Route path="/overdue" element={<Overdue />} />
                 </Routes>
               </main>
               <BottomNav />

@@ -4,12 +4,24 @@ import { useCategories } from '../../context/CategoryContext'
 
 const TaskCard = ({ task }) => {
   const { editTask, deleteTask, toggleStatus } = useTasks()
+  const { categories } = useCategories()
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState(task.title)
   const [editedCategory, setEditedCategory] = useState(task.category)
   const [editedPriority, setEditedPriority] = useState(task.priority || 'medium')
+  const [editedDueDate, setEditedDueDate] = useState(task.dueDate || '')
+  const [editedDueTime, setEditedDueTime] = useState(task.dueTime || '')
   const [showSubtasks, setShowSubtasks] = useState(false)
   const [newSubtask, setNewSubtask] = useState('')
+
+  const category = categories.find(c => c.id === task.category) || {
+    label: task.category || 'General',
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    accent: '#378ADD'
+  }
+
+  const subtasks = task.subtasks || []
+  const doneCount = subtasks.filter(s => s.done).length
 
   const handleSave = () => {
     if (!editedTitle.trim()) return
@@ -17,6 +29,8 @@ const TaskCard = ({ task }) => {
       title: editedTitle,
       category: editedCategory,
       priority: editedPriority,
+      dueDate: editedDueDate || null,
+      dueTime: editedDueTime || null,
     })
     setIsEditing(false)
   }
@@ -27,7 +41,7 @@ const TaskCard = ({ task }) => {
 
   const handleAddSubtask = () => {
     if (!newSubtask.trim()) return
-    const updated = [...(task.subtasks || []), {
+    const updated = [...subtasks, {
       id: crypto.randomUUID(),
       title: newSubtask,
       done: false,
@@ -37,21 +51,16 @@ const TaskCard = ({ task }) => {
   }
 
   const handleToggleSubtask = (subId) => {
-    const updated = (task.subtasks || []).map(s =>
+    const updated = subtasks.map(s =>
       s.id === subId ? { ...s, done: !s.done } : s
     )
     editTask(task.id, { subtasks: updated })
   }
 
   const handleDeleteSubtask = (subId) => {
-    const updated = (task.subtasks || []).filter(s => s.id !== subId)
+    const updated = subtasks.filter(s => s.id !== subId)
     editTask(task.id, { subtasks: updated })
   }
-
-  const { categories } = useCategories()
-  const category = categories.find(c => c.id === task.category) || categories[0]
-  const subtasks = task.subtasks || []
-  const doneCount = subtasks.filter(s => s.done).length
 
   if (isEditing) {
     return (
@@ -70,8 +79,8 @@ const TaskCard = ({ task }) => {
             onChange={e => setEditedCategory(e.target.value)}
             className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none"
           >
-            {Object.entries(CATEGORIES).map(([key, cat]) => (
-              <option key={key} value={key}>{cat.label}</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
           <select
@@ -83,6 +92,20 @@ const TaskCard = ({ task }) => {
             <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={editedDueDate}
+            onChange={e => setEditedDueDate(e.target.value)}
+            className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none"
+          />
+          <input
+            type="time"
+            value={editedDueTime}
+            onChange={e => setEditedDueTime(e.target.value)}
+            className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none"
+          />
         </div>
         <div className="flex gap-2">
           <button
@@ -105,7 +128,6 @@ const TaskCard = ({ task }) => {
   return (
     <div className={`border border-border rounded-xl bg-card ${task.status === 'done' ? 'opacity-60' : ''}`}>
       <div className="p-4 flex items-start gap-3">
-        {/* Checkbox */}
         <button
           onClick={() => toggleStatus(task)}
           className={`mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
@@ -117,14 +139,13 @@ const TaskCard = ({ task }) => {
           {task.status === 'done' && <span className="text-xs">✓</span>}
         </button>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
             {task.title}
           </p>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className={`text-xs px-2 py-0.5 rounded-full border ${category.color}`}>
-              {category.label}
+              {category.name || category.label}
             </span>
             {task.priority && (
               <span className={`text-xs px-2 py-0.5 rounded-full border
@@ -135,15 +156,16 @@ const TaskCard = ({ task }) => {
               </span>
             )}
             {task.dueDate && (
-             <span className="text-xs text-muted-foreground">
-             {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-             </span>
+              <span className="text-xs text-muted-foreground">
+                📅 {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                {task.dueTime && ` · ⏰ ${task.dueTime}`}
+              </span>
             )}
             {task.shared && (
-             <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
-             👥 Team
-             </span>
-             )}
+              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                👥 Team
+              </span>
+            )}
             {subtasks.length > 0 && (
               <button
                 onClick={() => setShowSubtasks(!showSubtasks)}
@@ -154,7 +176,6 @@ const TaskCard = ({ task }) => {
             )}
           </div>
 
-          {/* Subtask progress bar */}
           {subtasks.length > 0 && (
             <div className="mt-2 h-1 bg-border rounded-full overflow-hidden">
               <div
@@ -165,33 +186,28 @@ const TaskCard = ({ task }) => {
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
             onClick={() => setShowSubtasks(!showSubtasks)}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-all text-sm"
-            title="Subtasks"
           >
             ≡
           </button>
           <button
             onClick={() => setIsEditing(true)}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-all text-sm"
-            title="Edit"
           >
             ✏️
           </button>
           <button
             onClick={handleDelete}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-100 text-muted-foreground hover:text-red-600 transition-all text-sm"
-            title="Delete"
           >
             🗑️
           </button>
         </div>
       </div>
 
-      {/* Subtasks panel */}
       {showSubtasks && (
         <div className="border-t border-border px-4 pb-4 pt-3 space-y-2">
           {subtasks.map(sub => (
@@ -217,8 +233,6 @@ const TaskCard = ({ task }) => {
               </button>
             </div>
           ))}
-
-          {/* Add subtask input */}
           <div className="flex gap-2 mt-2">
             <input
               value={newSubtask}
